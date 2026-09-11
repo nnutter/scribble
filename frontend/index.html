@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scribble</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header><h1>Scribble<span>.</span></h1></header>
+    <section class="instructions"><p>Move your pointer onto the paper. Hold <kbd>any key</kbd> to draw.<br>Release to lift your pen, then hold again for the next stroke.</p></section>
+    <div class="paper" id="paper">
+      <svg id="drawing" viewBox="0 0 1000 400" preserveAspectRatio="none" tabindex="0" role="application" aria-label="Signature drawing area. Hold any keyboard key and move your pointer to draw. Release to lift the pen."></svg>
+      <div id="placeholder" aria-hidden="true">Your signature goes here<span>No clicking or dragging needed</span></div>
+      <span class="paper-label" aria-hidden="true">TRANSPARENT BACKGROUND</span>
+    </div>
+    <footer><div class="tools"><button id="undo" disabled>↶ Undo stroke</button><button id="clear" disabled>Clear all</button></div><button id="save" class="primary" disabled>Save SVG <span aria-hidden="true">↗</span></button></footer>
+    <div class="status-row"><span id="status" role="status" aria-live="polite"></span><span>Vector image · transparent · cropped to fit</span></div>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
