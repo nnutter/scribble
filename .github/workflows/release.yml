@@ -28,7 +28,7 @@ jobs:
     needs: validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install Linux WebKit/GTK dependencies
         run: |
           sudo apt-get update
@@ -79,7 +79,7 @@ jobs:
       GOARCH: ${{ matrix.goarch }}
       CGO_ENABLED: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install Linux WebKit/GTK dependencies
         if: runner.os == 'Linux'
         run: |
@@ -90,7 +90,7 @@ jobs:
         run: |
           mkdir -p dist
           go build -trimpath -ldflags "-s -w" -o "dist/scribble-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}" .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: scribble-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/
@@ -101,7 +101,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
