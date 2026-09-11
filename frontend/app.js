@@ -7,7 +7,7 @@ const undo = document.querySelector('#undo');
 const clear = document.querySelector('#clear');
 const save = document.querySelector('#save');
 const signature = new Signature();
-const keys = new Set();
+let penDown = false;
 let pointer = null;
 let saving = false;
 
@@ -16,10 +16,10 @@ function render(message) {
   document.querySelector('#placeholder').hidden = signature.strokes.length > 0;
   undo.disabled = clear.disabled = save.disabled = saving || signature.strokes.length === 0;
   paper.classList.toggle('recording', signature.active !== null);
-  status.textContent = message ?? (signature.active ? 'Pen down · release to lift' : signature.strokes.length ? `${signature.strokes.length} stroke${signature.strokes.length === 1 ? '' : 's'} · hold any key to continue` : '');
+  status.textContent = message ?? (signature.active ? 'Pen down · press Space to lift' : signature.strokes.length ? `${signature.strokes.length} stroke${signature.strokes.length === 1 ? '' : 's'} · press Space to continue` : '');
 }
 
-function stop() { keys.clear(); signature.end(); render(); }
+function stop() { penDown = false; signature.end(); render(); }
 function position(event) {
   const rect = drawing.getBoundingClientRect();
   return {x: (event.clientX - rect.left) * 1000 / rect.width, y: (event.clientY - rect.top) * 400 / rect.height};
@@ -27,30 +27,27 @@ function position(event) {
 drawing.addEventListener('pointerenter', event => { pointer = position(event); });
 drawing.addEventListener('pointermove', event => {
   pointer = position(event);
-  if (saving || !keys.size) return;
+  if (saving || !penDown) return;
   if (!signature.active) signature.begin(pointer);
   for (const sample of event.getCoalescedEvents?.() ?? [event]) signature.move(position(sample));
   signature.move(pointer);
   render();
 });
-drawing.addEventListener('pointerleave', () => { pointer = null; signature.end(); render(); });
+drawing.addEventListener('pointerleave', () => { pointer = null; penDown = false; signature.end(); render(); });
 drawing.addEventListener('pointercancel', () => { pointer = null; stop(); });
 drawing.addEventListener('pointerdown', event => { event.preventDefault(); drawing.focus({preventScroll: true}); });
 drawing.addEventListener('contextmenu', event => event.preventDefault());
 window.addEventListener('keydown', event => {
   // Outside the paper, buttons retain normal keyboard activation and navigation.
-  if (!pointer || saving) return;
+  if (event.code !== 'Space' || !pointer || saving) return;
   event.preventDefault();
-  if (event.repeat || keys.has(event.code)) return;
-  keys.add(event.code);
-  if (!signature.active) signature.begin(pointer);
-  render();
-}, true);
-window.addEventListener('keyup', event => {
-  if (!keys.has(event.code)) return;
-  event.preventDefault();
-  keys.delete(event.code);
-  if (!keys.size) signature.end();
+  if (event.repeat) return;
+  penDown = !penDown;
+  if (penDown) {
+    if (!signature.active) signature.begin(pointer);
+  } else {
+    signature.end();
+  }
   render();
 }, true);
 window.addEventListener('blur', () => { pointer = null; stop(); });

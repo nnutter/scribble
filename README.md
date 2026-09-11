@@ -2,11 +2,13 @@
 
 A small Wails v3 desktop app for drawing a signature with a touchpad or mouse.
 
-Move the pointer onto the drawing area, **hold any keyboard key**, and move to draw.
-Release all held keys to lift the pen. Repeat for as many strokes as you need.
-No mouse button is required. **Undo stroke** removes the last stroke; **Clear all**
-starts over. Leaving the drawing area ends the current stroke. Switching windows
-resets held keys, so returning cannot accidentally continue drawing.
+Move the pointer onto the drawing area, **press Space** to put the pen down,
+and move to draw. Press Space again to lift the pen. Repeat for as many
+strokes as you need. No mouse button is required and no key needs to be held,
+so touchpad disable-while-typing does not interrupt drawing. **Undo stroke**
+removes the last stroke; **Clear all** starts over. Leaving the drawing area
+ends the current stroke and lifts the pen. Switching windows lifts the pen,
+so returning cannot accidentally continue drawing.
 
 **Save SVG** opens a native Save dialog. The exported image has a transparent
 background and is cropped to the signature with a little padding. SVG scales
@@ -14,7 +16,7 @@ without losing sharpness. The checkerboard and instructions are only preview UI
 and are never exported. Drawings stay in memory until you clear them or quit.
 
 Keys are captured while the pointer is over the paper; outside it, buttons retain
-normal keyboard navigation. Space or Shift is a comfortable choice. OS-reserved
+normal keyboard navigation. Only Space toggles the pen. OS-reserved
 shortcuts and hardware keys may be intercepted by the operating system.
 
 ## Run
@@ -44,12 +46,12 @@ go vet ./...
 go build -o bin/scribble .
 ```
 
-For a manual desktop check, draw two strokes without clicking, release and move
-between them, then try Undo and Clear. Hold two keys and release one: the pen
-should stay down until the second is released. Switch away while drawing and
-return: the pen should be lifted. Save a signature, inspect the SVG in an image
-editor, and confirm that the background is transparent. Cancel Save and verify
-that the signature is retained.
+For a manual desktop check, draw two strokes without clicking, toggling Space
+down/up between them, then try Undo and Clear. Hold Space: key repeat must not
+toggle the pen repeatedly. Switch away while drawing and return: the pen should
+be lifted. Save a signature, inspect the SVG in an image editor, and confirm
+that the background is transparent. Cancel Save and verify that the signature
+is retained.
 
 ## Release
 
