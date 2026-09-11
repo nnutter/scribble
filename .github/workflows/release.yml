@@ -1,0 +1,115 @@
+name: Release
+
+# Cut a release by pushing a semantic version tag, e.g.
+#   git tag v1.2.3 && git push origin v1.2.3
+# Tags with a prerelease suffix (e.g. v1.2.3-rc.1) become prereleases.
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Validate version tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check tag is strict semantic versioning
+        run: |
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Tag $GITHUB_REF_NAME is not semantic versioning. Use vMAJOR.MINOR.PATCH."
+            exit 1
+          fi
+
+  test:
+    name: Test
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux WebKit/GTK dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libgtk-4-dev libwebkitgtk-6.0-dev
+      - uses: jdx/mise-action@v2
+      - run: npm test
+      - run: npm run check
+      - run: go vet ./...
+
+  # One native runner per target: Wails is CGO-based, so each GOOS builds
+  # on its own OS and each GOARCH on native hardware. Together they cover
+  # every OS/arch combination Wails v3 supports. Each binary embeds the
+  # already-tested frontend via go:embed.
+  build:
+    name: Build (${{ matrix.goos }}-${{ matrix.goarch }})
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+            ext: ''
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+            ext: ''
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            ext: '.exe'
+          - os: windows-11-arm
+            goos: windows
+            goarch: arm64
+            ext: '.exe'
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            ext: ''
+          - os: ubuntu-24.04-arm
+            goos: linux
+            goarch: arm64
+            ext: ''
+    runs-on: ${{ matrix.os }}
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      CGO_ENABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux WebKit/GTK dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libgtk-4-dev libwebkitgtk-6.0-dev
+      - uses: jdx/mise-action@v2
+      - name: Build binary
+        run: |
+          mkdir -p dist
+          go build -trimpath -ldflags "-s -w" -o "dist/scribble-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scribble-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/
+          if-no-files-found: error
+
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Write checksums
+        run: |
+          cd dist
+          sha256sum * > SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          prerelease: ${{ contains(github.ref_name, '-') }}
