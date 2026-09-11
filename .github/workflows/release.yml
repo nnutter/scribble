@@ -109,7 +109,13 @@ jobs:
         run: |
           cd dist
           sha256sum * > SHA256SUMS.txt
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*
-          prerelease: ${{ contains(github.ref_name, '-') }}
+      - name: Create GitHub Release
+        run: |
+          if [[ "$GITHUB_REF_NAME" == *"-"* ]]; then
+            PRE="--prerelease"
+          else
+            PRE=""
+          fi
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --draft $PRE dist/*
+        env:
+          GH_TOKEN: ${{ github.token }}
