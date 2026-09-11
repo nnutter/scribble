@@ -19,7 +19,8 @@ shortcuts and hardware keys may be intercepted by the operating system.
 
 ## Run
 
-Requires Go 1.27.1+ and the [Wails v3 platform prerequisites](https://v3.wails.io/getting-started/installation/)
+Runtimes are pinned in `.mise.toml`; run `mise install` for Go and Node.
+Also install the [Wails v3 platform prerequisites](https://v3.wails.io/getting-started/installation/)
 (on macOS, Xcode Command Line Tools). Wails is pinned in `go.mod`.
 
 ```sh
@@ -36,10 +37,9 @@ go build -o bin/scribble .
 
 ## Check
 
-Node 22+ is needed only for the frontend tests.
-
 ```sh
-node --test tests/*.test.mjs
+npm test
+npm run check
 go vet ./...
 go build -o bin/scribble .
 ```
@@ -50,3 +50,14 @@ should stay down until the second is released. Switch away while drawing and
 return: the pen should be lifted. Save a signature, inspect the SVG in an image
 editor, and confirm that the background is transparent. Cancel Save and verify
 that the signature is retained.
+
+## Release
+
+Push a semantic version tag to build all six Wails v3 targets
+(`darwin`, `linux`, `windows` × `amd64`, `arm64`) and attach the
+checksummed binaries to a GitHub Release. Tags with a prerelease
+suffix (e.g. `v1.2.3-rc.1`) become prereleases.
+
+```sh
+git tag v1.2.3 && git push origin v1.2.3
+```
