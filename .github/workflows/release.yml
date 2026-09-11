@@ -117,5 +117,10 @@ jobs:
             PRE=""
           fi
           gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --draft $PRE dist/*
+          URL=$(gh release view "$GITHUB_REF_NAME" --json url --jq .url)
+          {
+            echo "### Draft release"
+            echo "[$GITHUB_REF_NAME]($URL)"
+          } >> "$GITHUB_STEP_SUMMARY"
         env:
           GH_TOKEN: ${{ github.token }}
